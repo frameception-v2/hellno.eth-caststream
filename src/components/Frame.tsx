@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback, useState } from "react";
+import { Cast } from "~/lib/farcaster";
 import sdk, {
   AddFrame,
   SignIn as SignInCore,
@@ -22,19 +23,71 @@ import { createStore } from "mipd";
 import { Label } from "~/components/ui/label";
 import { PROJECT_TITLE } from "~/lib/constants";
 
-function ExampleCard() {
+async function fetchRecentCasts(): Promise<Cast[]> {
+  try {
+    const response = await fetch(`/api/casts`);
+    const data = await response.json();
+    return data.casts;
+  } catch (error) {
+    console.error('Error fetching casts:', error);
+    return [];
+  }
+}
+
+function RecentCastItem({ cast }: { cast: Cast }) {
   return (
-    <Card>
+    <Card className="mb-4">
       <CardHeader>
-        <CardTitle>Welcome to the Frame Template</CardTitle>
-        <CardDescription>
-          This is an example card that you can customize or remove
-        </CardDescription>
+        <CardTitle className="text-lg">
+          {cast.author?.displayName || 'Unknown user'}
+          <span className="text-sm text-gray-500 ml-2">
+            @{cast.author?.username}
+          </span>
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <Label>Place content in a Card here.</Label>
+        <p className="text-base">{cast.text}</p>
+        <div className="text-sm text-gray-500 mt-2">
+          {new Date(cast.timestamp).toLocaleString()}
+        </div>
       </CardContent>
     </Card>
+  );
+}
+
+function RecentCasts() {
+  const [casts, setCasts] = useState<Cast[]>([]);
+  const [error, setError] = useState<string>('');
+
+  useEffect(() => {
+    const loadCasts = async () => {
+      try {
+        const recentCasts = await fetchRecentCasts();
+        setCasts(recentCasts);
+      } catch (err) {
+        setError('Failed to load recent casts');
+      }
+    };
+    
+    loadCasts();
+    const interval = setInterval(loadCasts, 15000); // Refresh every 15 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
+
+  if (!casts.length) {
+    return <div className="text-gray-500">Loading recent casts...</div>;
+  }
+
+  return (
+    <div>
+      {casts.map((cast) => (
+        <RecentCastItem key={cast.hash} cast={cast} />
+      ))}
+    </div>
   );
 }
 
@@ -137,7 +190,7 @@ export default function Frame() {
       }}
     >
       <div className="w-[300px] mx-auto py-2 px-2">
-        <ExampleCard />
+        <RecentCasts />
       </div>
     </div>
   );

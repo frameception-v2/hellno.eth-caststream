@@ -26,8 +26,13 @@ import { PROJECT_TITLE } from "~/lib/constants";
 async function fetchRecentCasts(): Promise<Cast[]> {
   try {
     const response = await fetch(`/api/casts`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch casts: ${response.status} ${response.statusText}`);
+    }
     const data = await response.json();
-    return data.casts;
+    return data.casts.sort((a: Cast, b: Cast) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
   } catch (error) {
     console.error('Error fetching casts:', error);
     return [];
@@ -63,6 +68,7 @@ function RecentCasts() {
     const loadCasts = async () => {
       try {
         const recentCasts = await fetchRecentCasts();
+        // Casts are already sorted by the API, but we reverse for descending order
         setCasts(recentCasts);
       } catch (err) {
         setError('Failed to load recent casts');

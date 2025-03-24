@@ -1,4 +1,4 @@
-import { ImageResponse } from "next/og";
+import { ImageResponse } from "next/server";
 import { PROJECT_TITLE, PROJECT_DESCRIPTION } from "~/lib/constants";
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -15,9 +15,7 @@ async function loadFont(fontPath: string): Promise<Buffer> {
     // Fallback to loading from absolute path
     try {
       const absolutePath = join(
-        __dirname,
-        "..",
-        "..",
+        process.cwd(),
         "public",
         "fonts",
         fontPath.split("/").pop()!

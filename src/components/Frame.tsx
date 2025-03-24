@@ -43,7 +43,7 @@ function RecentCastItem({ cast }: { cast: NeynarCast }) {
         <CardTitle className="text-lg">
           {cast.author?.display_name || 'Unknown user'}
           <span className="text-sm text-gray-500 ml-2">
-            @{cast.author?.username}
+            @{cast.author?.username || 'unknown'}
           </span>
         </CardTitle>
       </CardHeader>
@@ -58,7 +58,7 @@ function RecentCastItem({ cast }: { cast: NeynarCast }) {
 }
 
 function RecentCasts() {
-  const [casts, setCasts] = useState<Cast[]>([]);
+  const [casts, setCasts] = useState<NeynarCast[]>([]);
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
@@ -69,7 +69,7 @@ function RecentCasts() {
         setError(''); // Clear any previous errors on success
       } catch (err) {
         let errorMessage = 'Failed to load recent casts';
-        if (err instanceof Error && 'status' in err) {
+        if (err instanceof Error && typeof err === 'object' && 'status' in err) {
           errorMessage = `API Error: ${err.status} - ${err.message}`;
         } else if (err instanceof Error) {
           errorMessage = err.message;

@@ -27,7 +27,9 @@ async function fetchRecentCasts(): Promise<Cast[]> {
   try {
     const response = await fetch(`/api/casts`);
     if (!response.ok) {
-      throw new Error(`Failed to fetch casts: ${response.status} ${response.statusText}`);
+      const error = new Error(`Failed to fetch casts: ${response.statusText}`);
+      (error as any).status = response.status;
+      throw error;
     }
     const data = await response.json();
     return data.casts.sort((a: Cast, b: Cast) => 
@@ -68,10 +70,17 @@ function RecentCasts() {
     const loadCasts = async () => {
       try {
         const recentCasts = await fetchRecentCasts();
-        // Casts are already sorted by the API, but we reverse for descending order
         setCasts(recentCasts);
+        setError(''); // Clear any previous errors on success
       } catch (err) {
-        setError('Failed to load recent casts');
+        let errorMessage = 'Failed to load recent casts';
+        if (err instanceof Error && 'status' in err) {
+          errorMessage = `API Error: ${err.status} - ${err.message}`;
+        } else if (err instanceof Error) {
+          errorMessage = err.message;
+        }
+        setError(errorMessage);
+        setCasts([]); // Clear casts on error
       }
     };
     

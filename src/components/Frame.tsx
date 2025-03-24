@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useCallback, useState } from "react";
-import { Cast } from "~/lib/farcaster";
+import { fetchGlobalCasts } from "~/lib/neynar";
+import type { NeynarCast } from "~/lib/neynar";
 import sdk, {
   AddFrame,
   SignIn as SignInCore,
@@ -23,16 +24,10 @@ import { createStore } from "mipd";
 import { Label } from "~/components/ui/label";
 import { PROJECT_TITLE } from "~/lib/constants";
 
-async function fetchRecentCasts(): Promise<Cast[]> {
+async function fetchRecentCasts(): Promise<NeynarCast[]> {
   try {
-    const response = await fetch(`/api/casts`);
-    if (!response.ok) {
-      const error = new Error(`Failed to fetch casts: ${response.statusText}`);
-      (error as any).status = response.status;
-      throw error;
-    }
-    const data = await response.json();
-    return data.casts.sort((a: Cast, b: Cast) => 
+    const casts = await fetchGlobalCasts(25);
+    return casts.sort((a, b) => 
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
   } catch (error) {
@@ -41,12 +36,12 @@ async function fetchRecentCasts(): Promise<Cast[]> {
   }
 }
 
-function RecentCastItem({ cast }: { cast: Cast }) {
+function RecentCastItem({ cast }: { cast: NeynarCast }) {
   return (
     <Card className="mb-4">
       <CardHeader>
         <CardTitle className="text-lg">
-          {cast.author?.displayName || 'Unknown user'}
+          {cast.author?.display_name || 'Unknown user'}
           <span className="text-sm text-gray-500 ml-2">
             @{cast.author?.username}
           </span>
